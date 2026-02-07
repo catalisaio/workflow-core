@@ -1,0 +1,18 @@
+{
+  "id": "noop_passthrough",
+  "description": "NoOp node passes data unchanged",
+  "category": "core",
+  "workflow": {
+    "name": "NoOp Passthrough",
+    "active": false,
+    "nodes": [
+      {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
+      {"name": "NoOp", "type": "n8n-nodes-base.noOp", "position": [300, 100], "parameters": {}}
+    ],
+    "connections": {
+      "Start": {"main": [[{"node": "NoOp", "type": "main", "index": 0}]]}
+    }
+  },
+  "input": [{"a": 1}],
+  "expected": [{"a": 1}]
+}

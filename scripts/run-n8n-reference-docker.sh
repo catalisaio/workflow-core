@@ -44,9 +44,13 @@ docker_net_args+=("--add-host" "host.docker.internal:host-gateway")
 
 docker_env_args=()
 docker_env_args+=("-e" "N8N_BLOCK_ENV_ACCESS_IN_NODE=false")
-if [ -n "${TEST_HTTP_URL:-}" ]; then
-  docker_env_args+=("-e" "TEST_HTTP_URL")
-fi
+while IFS='=' read -r var_name _; do
+  case "$var_name" in
+    TEST_*)
+      docker_env_args+=("-e" "$var_name")
+      ;;
+  esac
+done < <(env)
 
 tmp_dir="$(mktemp -d)"
 cleanup() {
@@ -74,7 +78,7 @@ with open(input_file, "r", encoding="utf-8") as f:
 if not isinstance(input_items, list):
     input_items = []
 
-seed_payload = input_items[0] if input_items and isinstance(input_items[0], dict) else {}
+seed_items = [item for item in input_items if isinstance(item, dict)]
 
 nodes = workflow.setdefault("nodes", [])
 connections = workflow.setdefault("connections", {})
@@ -85,7 +89,7 @@ for node in nodes:
         manual_trigger = node
         break
 
-if manual_trigger is not None and seed_payload:
+if manual_trigger is not None and seed_items:
     trigger_name = manual_trigger.get("name")
     trigger_position = manual_trigger.get("position") or [0, 0]
 
@@ -94,15 +98,15 @@ if manual_trigger is not None and seed_payload:
     if injector_name in existing_names:
         injector_name = f"__compat_input__{uuid.uuid4().hex[:8]}"
 
-    js_payload = json.dumps(seed_payload, ensure_ascii=False)
+    js_payload = json.dumps(seed_items, ensure_ascii=False)
     injector_node = {
         "id": str(uuid.uuid4()),
         "name": injector_name,
         "type": "n8n-nodes-base.code",
-        "typeVersion": 1,
+        "typeVersion": 2,
         "position": [trigger_position[0] + 220, trigger_position[1]],
         "parameters": {
-            "jsCode": f"return [{js_payload}];"
+            "jsCode": f"return {js_payload};"
         },
     }
     nodes.append(injector_node)
@@ -163,13 +167,68 @@ obj, _ = decoder.raw_decode(raw[start:])
 print(json.dumps(obj))
 ')"
 
-printf '%s' "$execution_payload" | jq -c '
-  .data.resultData as $rd
-  | ($rd.lastNodeExecuted // "") as $last
-  | if $last == "" then
-      []
-    else
-      ($rd.runData[$last][-1].data.main[0] // [])
-      | map(.json // .)
-    end
-'
+printf '%s' "$execution_payload" | python3 -c '
+import json
+import sys
+
+workflow_path = sys.argv[1]
+payload = json.load(sys.stdin)
+
+with open(workflow_path, "r", encoding="utf-8") as f:
+    workflow = json.load(f)
+
+run_data = (((payload.get("data") or {}).get("resultData") or {}).get("runData") or {})
+
+if not run_data:
+    print("[]")
+    raise SystemExit(0)
+
+connections = workflow.get("connections") or {}
+executed_nodes = set(run_data.keys())
+
+executed_downstream = set()
+for source, source_data in connections.items():
+    if source not in executed_nodes:
+        continue
+    for output in source_data.get("main") or []:
+        for conn in output or []:
+            target = (conn or {}).get("node")
+            if target in executed_nodes:
+                executed_downstream.add(source)
+                break
+        if source in executed_downstream:
+            break
+
+terminal_nodes = [node for node in executed_nodes if node not in executed_downstream]
+
+records = []
+for node in terminal_nodes:
+    runs = run_data.get(node) or []
+    if not runs:
+        continue
+    latest = runs[-1]
+    execution_index = latest.get("executionIndex", 0)
+    main_outputs = (((latest.get("data") or {}).get("main")) or [])
+    for output_index, output_items in enumerate(main_outputs):
+        if not output_items:
+            continue
+        for item_index, item in enumerate(output_items):
+            json_item = item.get("json") if isinstance(item, dict) else item
+            records.append((execution_index, output_index, item_index, json_item))
+
+if not records:
+    result_data = (payload.get("data") or {}).get("resultData") or {}
+    last_node = result_data.get("lastNodeExecuted")
+    if last_node and last_node in run_data:
+        latest = run_data[last_node][-1]
+        main_outputs = (((latest.get("data") or {}).get("main")) or [])
+        for output_index, output_items in enumerate(main_outputs):
+            if not output_items:
+                continue
+            for item_index, item in enumerate(output_items):
+                json_item = item.get("json") if isinstance(item, dict) else item
+                records.append((latest.get("executionIndex", 0), output_index, item_index, json_item))
+
+records.sort(key=lambda x: (x[0], x[1], x[2]))
+print(json.dumps([entry[3] for entry in records], ensure_ascii=False))
+' "$prepared_workflow"

@@ -1,0 +1,30 @@
+name: Compatibility Differential Nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  differential:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      N8N_REFERENCE_CMD: ./scripts/run-n8n-reference-docker.sh {workflow} {input}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Verify Docker
+        run: docker --version
+
+      - name: Run compatibility differential suite
+        run: go test ./tests/compat -run TestDifferentialParityAgainstN8N -v

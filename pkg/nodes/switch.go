@@ -72,7 +72,7 @@ func (n *SwitchNode) executeRulesMode(ctx *types.ExecutionContext, params map[st
 	}
 
 	if len(matchedOutput) == 0 {
-		return types.EmptyNodeData(), nil
+		return []types.NodeData{}, nil
 	}
 	return matchedOutput, nil
 }
@@ -142,7 +142,7 @@ func (n *SwitchNode) executeExpressionMode(ctx *types.ExecutionContext, params m
 	}
 
 	if len(matchedOutput) == 0 {
-		return types.EmptyNodeData(), nil
+		return []types.NodeData{}, nil
 	}
 	return matchedOutput, nil
 }

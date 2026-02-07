@@ -25,6 +25,11 @@ func TestDifferentialParityAgainstN8N(t *testing.T) {
 	}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/text" {
+			w.Header().Set("Content-Type", "text/plain")
+			_, _ = w.Write([]byte("Hello"))
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"ok":true,"service":"compat"}`))
 	}))
@@ -33,8 +38,26 @@ func TestDifferentialParityAgainstN8N(t *testing.T) {
 	for _, c := range cases {
 		c := c
 		t.Run(c.ID, func(t *testing.T) {
-			localEnv := map[string]string{"TEST_HTTP_URL": server.URL}
-			n8nEnv := map[string]string{"TEST_HTTP_URL": toDockerReachableURL(server.URL)}
+			if !c.DifferentialEnabled() {
+				t.Skip("case disabled for differential parity")
+			}
+
+			localEnv := map[string]string{}
+			n8nEnv := map[string]string{}
+			for k, v := range c.Env {
+				localEnv[k] = v
+				n8nEnv[k] = v
+			}
+			if path := localEnv["TEST_HTTP_PATH"]; path != "" {
+				localEnv["TEST_HTTP_URL"] = server.URL + path
+				n8nEnv["TEST_HTTP_URL"] = toDockerReachableURL(server.URL) + path
+			}
+			if localEnv["TEST_HTTP_URL"] == "" {
+				localEnv["TEST_HTTP_URL"] = server.URL
+			}
+			if n8nEnv["TEST_HTTP_URL"] == "" {
+				n8nEnv["TEST_HTTP_URL"] = toDockerReachableURL(server.URL)
+			}
 
 			localExec, localErr := harness.RunWorkflowCore(context.Background(), c, localEnv)
 			if localErr != nil {

@@ -1,0 +1,30 @@
+{
+  "id": "set_explicit_expression_number",
+  "description": "Set evaluates explicit ={{ }} expressions",
+  "category": "data-manipulation",
+  "workflow": {
+    "name": "Set Numeric Expression",
+    "active": false,
+    "nodes": [
+      {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
+      {
+        "name": "Set Value",
+        "type": "n8n-nodes-base.set",
+        "position": [300, 100],
+        "parameters": {
+          "mode": "manual",
+          "assignments": {
+            "assignments": [
+              {"name": "score", "value": "={{ $json.base }}", "type": "number"}
+            ]
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Start": {"main": [[{"node": "Set Value", "type": "main", "index": 0}]]}
+    }
+  },
+  "input": [{"base": 42}],
+  "expected": [{"base": 42, "score": 42}]
+}

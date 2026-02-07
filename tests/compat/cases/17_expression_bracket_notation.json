@@ -1,0 +1,30 @@
+{
+  "id": "expression_bracket_notation",
+  "description": "Bracket notation works in expressions",
+  "category": "expression",
+  "workflow": {
+    "name": "Bracket Notation",
+    "active": false,
+    "nodes": [
+      {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
+      {
+        "name": "Set",
+        "type": "n8n-nodes-base.set",
+        "position": [300, 100],
+        "parameters": {
+          "mode": "manual",
+          "assignments": {
+            "assignments": [
+              {"name": "copied", "value": "={{ $json['field-with-dash'] }}", "type": "string"}
+            ]
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Start": {"main": [[{"node": "Set", "type": "main", "index": 0}]]}
+    }
+  },
+  "input": [{"field-with-dash": "ok"}],
+  "expected": [{"field-with-dash": "ok", "copied": "ok"}]
+}

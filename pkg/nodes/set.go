@@ -22,7 +22,7 @@ func (n *SetNode) Execute(ctx *types.ExecutionContext, params map[string]interfa
 	}
 
 	mode := getStringParam(params, "mode", "manual")
-	keepOnlySet := getBoolParam(params, "keepOnlySet", false)
+	keepOnlySet := resolveKeepOnlySet(params)
 
 	var results []types.NodeData
 
@@ -246,4 +246,24 @@ func interfaceToString(val interface{}) string {
 func isExplicitExpression(value string) bool {
 	trimmed := strings.TrimSpace(value)
 	return strings.HasPrefix(trimmed, "={{")
+}
+
+func resolveKeepOnlySet(params map[string]interface{}) bool {
+	if _, exists := params["keepOnlySet"]; exists {
+		return getBoolParam(params, "keepOnlySet", false)
+	}
+
+	if _, exists := params["includeOtherFields"]; exists {
+		includeOther := getBoolParam(params, "includeOtherFields", false)
+		if !includeOther {
+			return true
+		}
+	}
+
+	include := strings.ToLower(strings.TrimSpace(getStringParam(params, "include", "")))
+	if include == "none" {
+		return true
+	}
+
+	return false
 }

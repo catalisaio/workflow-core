@@ -1,0 +1,40 @@
+{
+  "id": "if_is_empty_true",
+  "description": "IF isEmpty handles empty strings",
+  "category": "control-flow",
+  "workflow": {
+    "name": "IF Is Empty",
+    "active": false,
+    "nodes": [
+      {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
+      {
+        "name": "Check",
+        "type": "n8n-nodes-base.if",
+        "position": [300, 100],
+        "parameters": {
+          "conditions": {
+            "options": {"combineOperation": "and"},
+            "conditions": [
+              {"leftValue": "={{ $json.note }}", "operator": "isEmpty", "rightValue": null}
+            ]
+          }
+        }
+      },
+      {
+        "name": "Mark",
+        "type": "n8n-nodes-base.set",
+        "position": [500, 100],
+        "parameters": {
+          "mode": "manual",
+          "assignments": {"assignments": [{"name": "isEmpty", "value": true, "type": "boolean"}]}
+        }
+      }
+    ],
+    "connections": {
+      "Start": {"main": [[{"node": "Check", "type": "main", "index": 0}]]},
+      "Check": {"main": [[{"node": "Mark", "type": "main", "index": 0}], []]}
+    }
+  },
+  "input": [{"note": ""}],
+  "expected": [{"note": "", "isEmpty": true}]
+}

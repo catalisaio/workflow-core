@@ -200,6 +200,37 @@ workflow-core supports expressions in node parameters:
 {{ $node["NodeName"].json }} - Reference other node output
 ```
 
+## Compatibility Testing
+
+`workflow-core` uses two complementary compatibility layers:
+
+- Contract tests: validate expected `workflow-core` behavior with deterministic fixtures.
+- Differential tests: compare `workflow-core` output against n8n reference execution for the same cases.
+
+Why this is important:
+
+- Contract/unit tests can remain green while n8n compatibility drifts.
+- Differential failures detect semantic mismatches early (branching, expressions, node parameter behavior).
+- Catching drift in CI/nightly avoids production workflow surprises.
+
+Run contract suite:
+
+```bash
+go test ./tests/compat -run TestWorkflowCoreContractCases -v
+```
+
+Run differential suite (Docker n8n):
+
+```bash
+N8N_REFERENCE_CMD='./scripts/run-n8n-reference-docker.sh {workflow} {input}' \
+go test ./tests/compat -run TestDifferentialParityAgainstN8N -v
+```
+
+CI setup in this repository:
+
+- `.github/workflows/compat-contract.yml` runs on pull requests and `master` pushes.
+- `.github/workflows/compat-differential-nightly.yml` runs nightly and on manual dispatch.
+
 ## Architecture
 
 ```

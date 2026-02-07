@@ -1,0 +1,46 @@
+{
+  "id": "if_false_branch",
+  "description": "IF routes false output to connected node",
+  "category": "control-flow",
+  "workflow": {
+    "name": "IF False Branch",
+    "active": false,
+    "nodes": [
+      {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
+      {
+        "name": "Check",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [300, 100],
+        "parameters": {
+          "conditions": {
+            "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+            "conditions": [
+              {
+                "leftValue": "={{ $json.score }}",
+                "operator": {"type": "number", "operation": "gt"},
+                "rightValue": 70
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "name": "Fail",
+        "type": "n8n-nodes-base.set",
+        "position": [500, 180],
+        "parameters": {
+          "mode": "manual",
+          "assignments": {"assignments": [{"name": "result", "value": "FAIL", "type": "string"}]}
+        }
+      }
+    ],
+    "connections": {
+      "Start": {"main": [[{"node": "Check", "type": "main", "index": 0}]]},
+      "Check": {"main": [[], [{"node": "Fail", "type": "main", "index": 0}]]}
+    }
+  },
+  "input": [{"score": 50}],
+  "expected": [{"score": 50, "result": "FAIL"}]
+}
