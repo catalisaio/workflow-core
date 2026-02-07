@@ -2,6 +2,7 @@ package nodes
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/catalisaio/workflow-core/pkg/types"
 )
@@ -26,6 +27,8 @@ func (n *SetNode) Execute(ctx *types.ExecutionContext, params map[string]interfa
 	var results []types.NodeData
 
 	for _, item := range input {
+		ctx.Evaluator().SetData(item.JSON)
+
 		var newJSON map[string]interface{}
 
 		if keepOnlySet {
@@ -68,16 +71,15 @@ func (n *SetNode) processManualMode(ctx *types.ExecutionContext, params map[stri
 				if !ok {
 					continue
 				}
-				
+
 				name := getStringParam(assignment, "name", "")
 				if name == "" {
 					continue
 				}
 
 				value := assignment["value"]
-				
-				// Evaluate expressions in value
-				if strVal, ok := value.(string); ok {
+
+				if strVal, ok := value.(string); ok && isExplicitExpression(strVal) {
 					evaluated, err := ctx.Evaluator().Evaluate(strVal)
 					if err == nil {
 						value = evaluated
@@ -103,7 +105,7 @@ func (n *SetNode) processManualMode(ctx *types.ExecutionContext, params map[stri
 					continue
 				}
 				value := strVal["value"]
-				if strValue, ok := value.(string); ok {
+				if strValue, ok := value.(string); ok && isExplicitExpression(strValue) {
 					evaluated, err := ctx.Evaluator().Evaluate(strValue)
 					if err == nil {
 						value = evaluated
@@ -239,4 +241,9 @@ func interfaceToString(val interface{}) string {
 		return ""
 	}
 	return fmt.Sprintf("%v", val)
+}
+
+func isExplicitExpression(value string) bool {
+	trimmed := strings.TrimSpace(value)
+	return strings.HasPrefix(trimmed, "={{")
 }

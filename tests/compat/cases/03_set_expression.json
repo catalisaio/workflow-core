@@ -1,0 +1,58 @@
+{
+  "id": "set_expression",
+  "description": "Set evaluates expression against input item",
+  "category": "data-manipulation",
+  "workflow": {
+    "name": "Set Expression",
+    "active": false,
+    "nodes": [
+      {
+        "name": "Start",
+        "type": "n8n-nodes-base.manualTrigger",
+        "position": [100, 100],
+        "parameters": {}
+      },
+      {
+        "name": "Set Greeting",
+        "type": "n8n-nodes-base.set",
+        "position": [300, 100],
+        "parameters": {
+          "mode": "manual",
+          "assignments": {
+            "assignments": [
+              {
+                "name": "greeting",
+                "value": "Hello {{ $json.name }}",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Start": {
+        "main": [
+          [
+            {
+              "node": "Set Greeting",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "input": [
+    {
+      "name": "Ana"
+    }
+  ],
+  "expected": [
+    {
+      "name": "Ana",
+      "greeting": "Hello {{ $json.name }}"
+    }
+  ]
+}

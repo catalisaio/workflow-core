@@ -1,0 +1,87 @@
+{
+  "id": "expression_node_reference",
+  "description": "Expressions resolve $node references",
+  "category": "expression",
+  "workflow": {
+    "name": "Expression Node Reference",
+    "active": false,
+    "nodes": [
+      {
+        "name": "Start",
+        "type": "n8n-nodes-base.manualTrigger",
+        "position": [100, 100],
+        "parameters": {}
+      },
+      {
+        "name": "First",
+        "type": "n8n-nodes-base.set",
+        "position": [300, 100],
+        "parameters": {
+          "mode": "manual",
+          "assignments": {
+            "assignments": [
+              {
+                "name": "value",
+                "value": 5,
+                "type": "number"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Second",
+        "type": "n8n-nodes-base.set",
+        "position": [500, 100],
+        "parameters": {
+          "mode": "manual",
+          "assignments": {
+            "assignments": [
+              {
+                "name": "ref",
+                "value": "={{ $node[\"First\"].json.value }}",
+                "type": "number"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Start": {
+        "main": [
+          [
+            {
+              "node": "First",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "First": {
+        "main": [
+          [
+            {
+              "node": "Second",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "input": [
+    {
+      "x": 1
+    }
+  ],
+  "expected": [
+    {
+      "x": 1,
+      "value": 5,
+      "ref": 5
+    }
+  ]
+}

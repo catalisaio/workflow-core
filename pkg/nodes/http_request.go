@@ -56,7 +56,7 @@ func (n *HTTPRequestNode) Execute(ctx *types.ExecutionContext, params map[string
 
 		if method != "GET" && method != "HEAD" && method != "DELETE" {
 			bodyType := getStringParam(params, "bodyContentType", "json")
-			
+
 			switch bodyType {
 			case "json":
 				if jsonBody := getMapParam(params, "body"); jsonBody != nil {
@@ -100,7 +100,6 @@ func (n *HTTPRequestNode) Execute(ctx *types.ExecutionContext, params map[string
 
 		// Create HTTP request
 		reqCtx, cancel := context.WithTimeout(ctx.Context(), 30*time.Second)
-		defer cancel()
 
 		req, err := http.NewRequestWithContext(reqCtx, method, urlStr, bodyReader)
 		if err != nil {
@@ -151,33 +150,27 @@ func (n *HTTPRequestNode) Execute(ctx *types.ExecutionContext, params map[string
 
 		resp, err := client.Do(req)
 		if err != nil {
+			cancel()
 			return nil, fmt.Errorf("HTTP request failed: %w", err)
 		}
-		defer resp.Body.Close()
 
-		// Read response body
 		respBody, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		cancel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to read response body: %w", err)
 		}
 
-		// Build output data
-		output := map[string]interface{}{
-			"statusCode":   resp.StatusCode,
-			"statusText":   resp.Status,
-			"headers":      headersToMap(resp.Header),
-			"url":          urlStr,
-			"method":       method,
-		}
-
-		// Try to parse response as JSON
+		var output map[string]interface{}
 		var jsonResponse interface{}
 		if err := json.Unmarshal(respBody, &jsonResponse); err == nil {
-			output["data"] = jsonResponse
-			output["json"] = jsonResponse
+			if obj, ok := jsonResponse.(map[string]interface{}); ok {
+				output = obj
+			} else {
+				output = map[string]interface{}{"data": jsonResponse}
+			}
 		} else {
-			output["data"] = string(respBody)
-			output["body"] = string(respBody)
+			output = map[string]interface{}{"data": string(respBody)}
 		}
 
 		results = append(results, types.NodeData{
@@ -186,17 +179,4 @@ func (n *HTTPRequestNode) Execute(ctx *types.ExecutionContext, params map[string
 	}
 
 	return results, nil
-}
-
-// headersToMap converts http.Header to a map.
-func headersToMap(h http.Header) map[string]interface{} {
-	result := make(map[string]interface{})
-	for key, values := range h {
-		if len(values) == 1 {
-			result[key] = values[0]
-		} else {
-			result[key] = values
-		}
-	}
-	return result
 }
