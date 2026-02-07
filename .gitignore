@@ -1,6 +1,6 @@
-# Binaries
-workflow-core
-workflow-core-*
+# Binaries (only in root directory)
+/workflow-core
+/workflow-core-*
 *.exe
 
 # Test artifacts
