@@ -74,7 +74,7 @@ with open(input_file, "r", encoding="utf-8") as f:
 if not isinstance(input_items, list):
     input_items = []
 
-seed_payload = input_items[0] if input_items and isinstance(input_items[0], dict) else {}
+seed_items = [item for item in input_items if isinstance(item, dict)]
 
 nodes = workflow.setdefault("nodes", [])
 connections = workflow.setdefault("connections", {})
@@ -85,7 +85,7 @@ for node in nodes:
         manual_trigger = node
         break
 
-if manual_trigger is not None and seed_payload:
+if manual_trigger is not None and seed_items:
     trigger_name = manual_trigger.get("name")
     trigger_position = manual_trigger.get("position") or [0, 0]
 
@@ -94,7 +94,7 @@ if manual_trigger is not None and seed_payload:
     if injector_name in existing_names:
         injector_name = f"__compat_input__{uuid.uuid4().hex[:8]}"
 
-    js_payload = json.dumps(seed_payload, ensure_ascii=False)
+    js_payload = json.dumps(seed_items, ensure_ascii=False)
     injector_node = {
         "id": str(uuid.uuid4()),
         "name": injector_name,
@@ -102,7 +102,7 @@ if manual_trigger is not None and seed_payload:
         "typeVersion": 1,
         "position": [trigger_position[0] + 220, trigger_position[1]],
         "parameters": {
-            "jsCode": f"return [{js_payload}];"
+            "jsCode": f"return {js_payload};"
         },
     }
     nodes.append(injector_node)

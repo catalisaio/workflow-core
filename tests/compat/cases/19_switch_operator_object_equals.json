@@ -1,0 +1,54 @@
+{
+  "id": "switch_operator_object_equals",
+  "description": "Switch supports operator object schema",
+  "category": "control-flow",
+  "workflow": {
+    "name": "Switch Operator Object",
+    "active": false,
+    "nodes": [
+      {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
+      {
+        "name": "Route",
+        "type": "n8n-nodes-base.switch",
+        "position": [300, 100],
+        "parameters": {
+          "mode": "rules",
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.kind }}",
+                      "operator": {"operation": "equals", "type": "string", "name": "filter.operator.equals"},
+                      "rightValue": "invoice"
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "outputKey": "Invoice"
+              }
+            ]
+          },
+          "options": {"fallbackOutput": "none"}
+        }
+      },
+      {
+        "name": "Mark",
+        "type": "n8n-nodes-base.set",
+        "position": [500, 100],
+        "parameters": {
+          "mode": "manual",
+          "assignments": {"assignments": [{"name": "matched", "value": true, "type": "boolean"}]}
+        }
+      }
+    ],
+    "connections": {
+      "Start": {"main": [[{"node": "Route", "type": "main", "index": 0}]]},
+      "Route": {"main": [[{"node": "Mark", "type": "main", "index": 0}]]}
+    }
+  },
+  "input": [{"kind": "invoice"}],
+  "expected": [{"kind": "invoice", "matched": true}]
+}

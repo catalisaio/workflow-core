@@ -1,0 +1,39 @@
+{
+  "id": "http_request_text_body",
+  "description": "HTTPRequest handles plain text responses",
+  "category": "http",
+  "workflow": {
+    "name": "HTTP Text",
+    "active": false,
+    "nodes": [
+      {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
+      {
+        "name": "Call API",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [300, 100],
+        "parameters": {"method": "GET", "url": "={{ $env.TEST_HTTP_URL }}"}
+      },
+      {
+        "name": "Set",
+        "type": "n8n-nodes-base.set",
+        "position": [500, 100],
+        "parameters": {
+          "mode": "manual",
+          "keepOnlySet": true,
+          "assignments": {
+            "assignments": [
+              {"name": "data", "value": "={{ $json.data }}", "type": "string"}
+            ]
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Start": {"main": [[{"node": "Call API", "type": "main", "index": 0}]]},
+      "Call API": {"main": [[{"node": "Set", "type": "main", "index": 0}]]}
+    }
+  },
+  "input": [{"id": "t-1"}],
+  "env": {"TEST_HTTP_PATH": "/text"},
+  "expected": [{"data": "Hello"}]
+}

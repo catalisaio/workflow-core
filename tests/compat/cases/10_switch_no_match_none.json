@@ -1,0 +1,45 @@
+{
+  "id": "switch_no_match_none",
+  "description": "Switch with fallback none drops unmatched items",
+  "category": "control-flow",
+  "differential": false,
+  "workflow": {
+    "name": "Switch None",
+    "active": false,
+    "nodes": [
+      {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
+      {
+        "name": "Route",
+        "type": "n8n-nodes-base.switch",
+        "position": [300, 100],
+        "parameters": {
+          "mode": "rules",
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.type }}",
+                      "operator": {"operation": "equals", "type": "string"},
+                      "rightValue": "A"
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "outputKey": "A"
+              }
+            ]
+          },
+          "options": {"fallbackOutput": "none"}
+        }
+      }
+    ],
+    "connections": {
+      "Start": {"main": [[{"node": "Route", "type": "main", "index": 0}]]}
+    }
+  },
+  "input": [{"type": "Z"}],
+  "expected": [{}]
+}

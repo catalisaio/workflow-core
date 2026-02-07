@@ -1,0 +1,32 @@
+{
+  "id": "set_env_expression",
+  "description": "Set can read env via explicit expression",
+  "category": "expression",
+  "differential": false,
+  "workflow": {
+    "name": "Set Env",
+    "active": false,
+    "nodes": [
+      {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
+      {
+        "name": "Set Env",
+        "type": "n8n-nodes-base.set",
+        "position": [300, 100],
+        "parameters": {
+          "mode": "manual",
+          "assignments": {
+            "assignments": [
+              {"name": "fromEnv", "value": "={{ $env.TEST_COMPAT_NAME }}", "type": "string"}
+            ]
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Start": {"main": [[{"node": "Set Env", "type": "main", "index": 0}]]}
+    }
+  },
+  "input": [{"x": 1}],
+  "env": {"TEST_COMPAT_NAME": "compat-name"},
+  "expected": [{"x": 1, "fromEnv": "compat-name"}]
+}

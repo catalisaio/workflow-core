@@ -1,0 +1,32 @@
+{
+  "id": "set_keep_only_set",
+  "description": "Set keepOnlySet removes original fields",
+  "category": "data-manipulation",
+  "differential": false,
+  "workflow": {
+    "name": "Set Keep Only",
+    "active": false,
+    "nodes": [
+      {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
+      {
+        "name": "Set Fields",
+        "type": "n8n-nodes-base.set",
+        "position": [300, 100],
+        "parameters": {
+          "mode": "manual",
+          "keepOnlySet": true,
+          "assignments": {
+            "assignments": [
+              {"name": "only", "value": "kept", "type": "string"}
+            ]
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Start": {"main": [[{"node": "Set Fields", "type": "main", "index": 0}]]}
+    }
+  },
+  "input": [{"a": 1, "b": 2}],
+  "expected": [{"only": "kept"}]
+}

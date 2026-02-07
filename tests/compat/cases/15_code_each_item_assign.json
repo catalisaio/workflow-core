@@ -1,0 +1,27 @@
+{
+  "id": "code_each_item_assign",
+  "description": "Code runOnceForEachItem applies simple assignment",
+  "category": "code",
+  "differential": false,
+  "workflow": {
+    "name": "Code Each Item",
+    "active": false,
+    "nodes": [
+      {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
+      {
+        "name": "Code",
+        "type": "n8n-nodes-base.code",
+        "position": [300, 100],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "for (const item of items) { item.json.copy = item.json.value; } return items;"
+        }
+      }
+    ],
+    "connections": {
+      "Start": {"main": [[{"node": "Code", "type": "main", "index": 0}]]}
+    }
+  },
+  "input": [{"value": 7}],
+  "expected": [{"value": 7, "copy": 7}]
+}

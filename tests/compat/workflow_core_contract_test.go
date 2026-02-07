@@ -18,6 +18,11 @@ func TestWorkflowCoreContractCases(t *testing.T) {
 	}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/text" {
+			w.Header().Set("Content-Type", "text/plain")
+			_, _ = w.Write([]byte("Hello"))
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"ok":true,"service":"compat"}`))
 	}))
@@ -26,7 +31,16 @@ func TestWorkflowCoreContractCases(t *testing.T) {
 	for _, c := range cases {
 		c := c
 		t.Run(c.ID, func(t *testing.T) {
-			env := map[string]string{"TEST_HTTP_URL": server.URL}
+			env := map[string]string{}
+			for k, v := range c.Env {
+				env[k] = v
+			}
+			if path := env["TEST_HTTP_PATH"]; path != "" {
+				env["TEST_HTTP_URL"] = server.URL + path
+			}
+			if env["TEST_HTTP_URL"] == "" {
+				env["TEST_HTTP_URL"] = server.URL
+			}
 
 			execResult, runErr := harness.RunWorkflowCore(context.Background(), c, env)
 			if runErr != nil {
