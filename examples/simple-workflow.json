@@ -1,0 +1,155 @@
+{
+  "name": "Simple Data Processing Workflow",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [100, 200],
+      "parameters": {}
+    },
+    {
+      "id": "2",
+      "name": "Set Initial Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [300, 200],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "name": "name",
+              "value": "John Doe",
+              "type": "string"
+            },
+            {
+              "name": "score",
+              "value": 85,
+              "type": "number"
+            },
+            {
+              "name": "status",
+              "value": "active",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3",
+      "name": "Check Score",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [500, 200],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "combineOperation": "and"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.score }}",
+              "operator": "larger",
+              "rightValue": 70
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "4",
+      "name": "Format Pass Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [700, 150],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "name": "result",
+              "value": "PASSED",
+              "type": "string"
+            },
+            {
+              "name": "message",
+              "value": "Congratulations! You passed with a score of {{ $json.score }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "5",
+      "name": "Format Fail Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [700, 300],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "name": "result",
+              "value": "FAILED",
+              "type": "string"
+            },
+            {
+              "name": "message",
+              "value": "You need to improve. Score: {{ $json.score }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6",
+      "name": "Debug Output",
+      "type": "n8n-nodes-base.debug",
+      "typeVersion": 1,
+      "position": [900, 200],
+      "parameters": {
+        "logOutput": true,
+        "logLevel": "info"
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [{"node": "Set Initial Data", "type": "main", "index": 0}]
+      ]
+    },
+    "Set Initial Data": {
+      "main": [
+        [{"node": "Check Score", "type": "main", "index": 0}]
+      ]
+    },
+    "Check Score": {
+      "main": [
+        [{"node": "Format Pass Result", "type": "main", "index": 0}],
+        [{"node": "Format Fail Result", "type": "main", "index": 0}]
+      ]
+    },
+    "Format Pass Result": {
+      "main": [
+        [{"node": "Debug Output", "type": "main", "index": 0}]
+      ]
+    },
+    "Format Fail Result": {
+      "main": [
+        [{"node": "Debug Output", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "active": true
+}

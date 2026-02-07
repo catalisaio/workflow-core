@@ -1,0 +1,80 @@
+{
+  "name": "HTTP Request Workflow",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [100, 200],
+      "parameters": {}
+    },
+    {
+      "id": "2",
+      "name": "Fetch Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [300, 200],
+      "parameters": {
+        "method": "GET",
+        "url": "https://jsonplaceholder.typicode.com/posts/1"
+      }
+    },
+    {
+      "id": "3",
+      "name": "Process Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [500, 200],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "name": "postTitle",
+              "value": "={{ $json.data.title }}",
+              "type": "string"
+            },
+            {
+              "name": "postBody",
+              "value": "={{ $json.data.body }}",
+              "type": "string"
+            },
+            {
+              "name": "statusCode",
+              "value": "={{ $json.statusCode }}",
+              "type": "number"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "4",
+      "name": "Final Output",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [700, 200],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [{"node": "Fetch Data", "type": "main", "index": 0}]
+      ]
+    },
+    "Fetch Data": {
+      "main": [
+        [{"node": "Process Response", "type": "main", "index": 0}]
+      ]
+    },
+    "Process Response": {
+      "main": [
+        [{"node": "Final Output", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "settings": {},
+  "active": true
+}
