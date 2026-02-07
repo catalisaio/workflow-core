@@ -3,14 +3,16 @@
 [![Go Version](https://img.shields.io/badge/go-1.22+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-High-performance workflow execution engine with n8n workflow format compatibility. Execute complex automation workflows defined in JSON with support for conditional logic, HTTP requests, data transformations, and more.
+High-performance workflow execution engine compatible with n8n workflow format. Execute complex automation workflows defined in JSON with support for conditional logic, HTTP requests, data transformations, IAM integration, and more.
 
 ## Features
 
-- **n8n Format Compatible**: Parse and execute workflows in the n8n JSON format
+- **Workflow Format Compatibility**: Parse and execute workflows in n8n-compatible JSON format
 - **DAG-Based Execution**: Automatic dependency resolution and topological sorting
 - **Rich Node Library**: Built-in support for triggers, conditions, HTTP requests, data manipulation
 - **Expression Evaluation**: Support for `{{ }}` expression syntax with `$json`, `$env`, and `$node` references
+- **IAM Integration**: Authentication and authorization via building-blocks IAM service
+- **Multi-Tenant Support**: Organization context for workflow isolation
 - **Extensible Architecture**: Easy to add custom node types
 - **CLI & Library**: Use as a command-line tool or embed in your Go applications
 
@@ -60,30 +62,30 @@ go install github.com/catalisaio/workflow-core/cmd/workflow-core@latest
 ## Supported Node Types
 
 ### Triggers
-- `n8n-nodes-base.manualTrigger` - Manual execution trigger
-- `n8n-nodes-base.webhook` - HTTP webhook trigger
-- `n8n-nodes-base.cron` - Cron/schedule trigger
-- `n8n-nodes-base.scheduleTrigger` - Schedule trigger
+- `manualTrigger` - Manual execution trigger
+- `webhook` - HTTP webhook trigger
+- `cron` - Cron/schedule trigger
+- `scheduleTrigger` - Schedule trigger
 
 ### Data Manipulation
-- `n8n-nodes-base.set` - Set/modify data fields
-- `n8n-nodes-base.merge` - Merge data from multiple sources
-- `n8n-nodes-base.splitInBatches` - Split data into batches
+- `set` - Set/modify data fields
+- `merge` - Merge data from multiple sources
+- `splitInBatches` - Split data into batches
 
 ### Control Flow
-- `n8n-nodes-base.if` - Conditional branching
-- `n8n-nodes-base.switch` - Multi-way branching
-- `n8n-nodes-base.noOp` - Pass-through node
+- `if` - Conditional branching
+- `switch` - Multi-way branching
+- `noOp` - Pass-through node
 
 ### HTTP
-- `n8n-nodes-base.httpRequest` - Make HTTP requests
-- `n8n-nodes-base.respondToWebhook` - Send webhook response
+- `httpRequest` - Make HTTP requests
+- `respondToWebhook` - Send webhook response
 
 ### Code Execution
-- `n8n-nodes-base.code` - Execute JavaScript-like code
+- `code` - Execute JavaScript-like code
 
 ### Debugging
-- `n8n-nodes-base.debug` - Log debug information
+- `debug` - Log debug information
 
 ## Example Workflow
 
@@ -130,6 +132,7 @@ import (
     "log"
 
     "github.com/catalisaio/workflow-core/pkg/engine"
+    "github.com/catalisaio/workflow-core/pkg/nodes"
     "github.com/catalisaio/workflow-core/pkg/parser"
 )
 
@@ -141,8 +144,9 @@ func main() {
         log.Fatal(err)
     }
 
-    // Create engine
+    // Create engine with registry
     eng := engine.NewEngine(engine.DefaultEngineOptions())
+    eng.SetRegistry(nodes.NewRegistry())
 
     // Execute
     result, err := eng.Execute(context.Background(), workflow, nil)
@@ -155,9 +159,38 @@ func main() {
 }
 ```
 
+## IAM Integration
+
+workflow-core integrates with the building-blocks IAM service for authentication and authorization:
+
+```go
+import "github.com/catalisaio/workflow-core/pkg/auth"
+
+// Create auth middleware
+middleware, _ := auth.NewAuthMiddleware(auth.AuthMiddlewareConfig{
+    JWTSecret: os.Getenv("JWT_SECRET"),
+})
+
+// Protect API routes
+http.Handle("/api/", middleware.Handler(apiHandler))
+
+// Require specific permission
+executeHandler := middleware.RequirePermission(auth.PermissionWorkflowsExecute)(handler)
+```
+
+See [IAM Integration](docs/iam-integration.md) for detailed documentation.
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `IAM_BASE_URL` | IAM service URL |
+| `JWT_SECRET` | JWT validation secret |
+| `AUTH_ENABLED` | Enable authentication (default: true) |
+
 ## Expression Syntax
 
-Workflow-core supports n8n-style expressions:
+workflow-core supports expressions in node parameters:
 
 ```
 {{ $json.fieldName }}       - Access input data
@@ -179,6 +212,8 @@ Workflow-core supports n8n-style expressions:
 │  │             │  Evaluator   │                 │  │
 │  └─────────────┴──────────────┴─────────────────┘  │
 ├─────────────────────────────────────────────────────┤
+│              Auth Middleware (IAM)                  │
+├─────────────────────────────────────────────────────┤
 │                  Node Registry                      │
 │  ┌────────┬────────┬────────┬────────┬─────────┐   │
 │  │Triggers│  Data  │Control │  HTTP  │  Code   │   │
@@ -188,14 +223,24 @@ Workflow-core supports n8n-style expressions:
 
 ## Roadmap
 
+- [x] Core workflow execution engine
+- [x] IAM integration
+- [ ] REST API server mode
 - [ ] Additional node types (Email, Database, Queue)
 - [ ] Parallel execution support
 - [ ] Retry policies
 - [ ] Webhook server mode
-- [ ] Workflow variables and static data
 - [ ] Sub-workflow execution
 - [ ] Credential management
 - [ ] OpenTelemetry tracing
+
+## Documentation
+
+- [Getting Started](docs/getting-started.md)
+- [Architecture](docs/architecture.md)
+- [Supported Nodes](docs/supported-nodes.md)
+- [Example Workflows](docs/examples.md)
+- [IAM Integration](docs/iam-integration.md)
 
 ## Contributing
 
