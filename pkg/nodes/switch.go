@@ -2,6 +2,7 @@ package nodes
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/catalisaio/workflow-core/pkg/types"
 )
@@ -21,7 +22,7 @@ func (n *SwitchNode) Execute(ctx *types.ExecutionContext, params map[string]inte
 	}
 
 	mode := getStringParam(params, "mode", "rules")
-	
+
 	switch mode {
 	case "rules":
 		return n.executeRulesMode(ctx, params, input)
@@ -34,22 +35,17 @@ func (n *SwitchNode) Execute(ctx *types.ExecutionContext, params map[string]inte
 
 // executeRulesMode executes switch with rule-based routing.
 func (n *SwitchNode) executeRulesMode(ctx *types.ExecutionContext, params map[string]interface{}, input []types.NodeData) ([]types.NodeData, error) {
-	rules := getSliceParam(params, "rules")
-	if rules == nil {
-		// Try v2 format
-		if rulesObj, ok := params["rules"].(map[string]interface{}); ok {
-			if rulesList, ok := rulesObj["rules"].([]interface{}); ok {
-				rules = rulesList
-			}
-		}
+	rules := n.extractRules(params)
+	if len(rules) == 0 {
+		return types.EmptyNodeData(), nil
 	}
 
 	// Process each input item
 	var matchedOutput []types.NodeData
-	
+
 	for _, item := range input {
 		ctx.Evaluator().SetData(item.JSON)
-		
+
 		matched := false
 		for _, rule := range rules {
 			ruleMap, ok := rule.(map[string]interface{})
@@ -57,15 +53,7 @@ func (n *SwitchNode) executeRulesMode(ctx *types.ExecutionContext, params map[st
 				continue
 			}
 
-			// Evaluate rule conditions
-			conditions := getSliceParam(ruleMap, "conditions")
-			if conditions == nil {
-				if condObj, ok := ruleMap["conditions"].(map[string]interface{}); ok {
-					if condList, ok := condObj["conditions"].([]interface{}); ok {
-						conditions = condList
-					}
-				}
-			}
+			conditions := n.extractRuleConditions(ruleMap)
 
 			if n.evaluateRuleConditions(ctx, conditions) {
 				matchedOutput = append(matchedOutput, item)
@@ -76,7 +64,7 @@ func (n *SwitchNode) executeRulesMode(ctx *types.ExecutionContext, params map[st
 
 		// If no rule matched, check for fallback
 		if !matched {
-			fallbackOutput := getStringParam(params, "fallbackOutput", "none")
+			fallbackOutput := n.extractFallbackOutput(params)
 			if fallbackOutput != "none" {
 				matchedOutput = append(matchedOutput, item)
 			}
@@ -89,21 +77,63 @@ func (n *SwitchNode) executeRulesMode(ctx *types.ExecutionContext, params map[st
 	return matchedOutput, nil
 }
 
+func (n *SwitchNode) extractRules(params map[string]interface{}) []interface{} {
+	if rulesObj, ok := params["rules"].(map[string]interface{}); ok {
+		if values, ok := rulesObj["values"].([]interface{}); ok {
+			return values
+		}
+		if rulesList, ok := rulesObj["rules"].([]interface{}); ok {
+			return rulesList
+		}
+	}
+	if rules, ok := params["rules"].([]interface{}); ok {
+		return rules
+	}
+	return nil
+}
+
+func (n *SwitchNode) extractRuleConditions(rule map[string]interface{}) []interface{} {
+	if conditionsObj, ok := rule["conditions"].(map[string]interface{}); ok {
+		if values, ok := conditionsObj["values"].([]interface{}); ok {
+			return values
+		}
+		if condList, ok := conditionsObj["conditions"].([]interface{}); ok {
+			return condList
+		}
+	}
+	if conditions, ok := rule["conditions"].([]interface{}); ok {
+		return conditions
+	}
+	return nil
+}
+
+func (n *SwitchNode) extractFallbackOutput(params map[string]interface{}) string {
+	if options, ok := params["options"].(map[string]interface{}); ok {
+		if fallback, ok := options["fallbackOutput"]; ok {
+			return strings.TrimSpace(fmt.Sprintf("%v", fallback))
+		}
+	}
+	if fallback, ok := params["fallbackOutput"]; ok {
+		return strings.TrimSpace(fmt.Sprintf("%v", fallback))
+	}
+	return "none"
+}
+
 // executeExpressionMode executes switch with expression-based routing.
 func (n *SwitchNode) executeExpressionMode(ctx *types.ExecutionContext, params map[string]interface{}, input []types.NodeData) ([]types.NodeData, error) {
 	output := getStringParam(params, "output", "")
-	
+
 	var matchedOutput []types.NodeData
-	
+
 	for _, item := range input {
 		ctx.Evaluator().SetData(item.JSON)
-		
+
 		// Evaluate the output expression
 		result, err := ctx.Evaluator().Evaluate(output)
 		if err != nil {
 			continue
 		}
-		
+
 		// Result should be an output index or name
 		outputStr := fmt.Sprintf("%v", result)
 		if outputStr != "" && outputStr != "0" {
@@ -131,7 +161,13 @@ func (n *SwitchNode) evaluateRuleConditions(ctx *types.ExecutionContext, conditi
 
 		leftValue := condMap["leftValue"]
 		rightValue := condMap["rightValue"]
-		operator := getStringParam(condMap, "operator", "equals")
+		operator := "equals"
+		if op, ok := condMap["operator"].(string); ok {
+			operator = op
+		}
+		if opObj, ok := condMap["operator"].(map[string]interface{}); ok {
+			operator = getStringParam(opObj, "operation", operator)
+		}
 
 		// Evaluate expressions
 		left, err := ctx.Evaluator().Evaluate(leftValue)

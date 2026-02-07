@@ -1,0 +1,84 @@
+{
+  "id": "http_request_json",
+  "description": "HTTPRequest gets JSON and maps response fields",
+  "category": "http",
+  "workflow": {
+    "name": "HTTP Request JSON",
+    "active": false,
+    "nodes": [
+      {
+        "name": "Start",
+        "type": "n8n-nodes-base.manualTrigger",
+        "position": [100, 100],
+        "parameters": {}
+      },
+      {
+        "name": "Call API",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [300, 100],
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $env.TEST_HTTP_URL }}"
+        }
+      },
+      {
+        "name": "Pick Fields",
+        "type": "n8n-nodes-base.set",
+        "position": [500, 100],
+        "parameters": {
+          "mode": "manual",
+          "keepOnlySet": true,
+          "assignments": {
+            "assignments": [
+              {
+                "name": "ok",
+                "value": "={{ $json.ok }}",
+                "type": "boolean"
+              },
+              {
+                "name": "service",
+                "value": "={{ $json.service }}",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Start": {
+        "main": [
+          [
+            {
+              "node": "Call API",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call API": {
+        "main": [
+          [
+            {
+              "node": "Pick Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "input": [
+    {
+      "requestId": "r-1"
+    }
+  ],
+  "expected": [
+    {
+      "ok": true,
+      "service": "compat"
+    }
+  ]
+}

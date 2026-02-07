@@ -1,0 +1,89 @@
+{
+  "id": "if_true_branch",
+  "description": "IF routes true output to connected node",
+  "category": "control-flow",
+  "workflow": {
+    "name": "IF True Branch",
+    "active": false,
+    "nodes": [
+      {
+        "name": "Start",
+        "type": "n8n-nodes-base.manualTrigger",
+        "position": [100, 100],
+        "parameters": {}
+      },
+      {
+        "name": "Check",
+        "type": "n8n-nodes-base.if",
+        "position": [300, 100],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "combineOperation": "and"
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.score }}",
+                "operator": "larger",
+                "rightValue": 70
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Pass",
+        "type": "n8n-nodes-base.set",
+        "position": [500, 100],
+        "parameters": {
+          "mode": "manual",
+          "assignments": {
+            "assignments": [
+              {
+                "name": "result",
+                "value": "PASS",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Start": {
+        "main": [
+          [
+            {
+              "node": "Check",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check": {
+        "main": [
+          [
+            {
+              "node": "Pass",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      }
+    }
+  },
+  "input": [
+    {
+      "score": 85
+    }
+  ],
+  "expected": [
+    {
+      "score": 85,
+      "result": "PASS"
+    }
+  ]
+}
