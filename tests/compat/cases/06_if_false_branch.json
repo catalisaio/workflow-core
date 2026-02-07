@@ -2,7 +2,6 @@
   "id": "if_false_branch",
   "description": "IF routes false output to connected node",
   "category": "control-flow",
-  "differential": false,
   "workflow": {
     "name": "IF False Branch",
     "active": false,
@@ -11,13 +10,19 @@
       {
         "name": "Check",
         "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
         "position": [300, 100],
         "parameters": {
           "conditions": {
-            "options": {"combineOperation": "and"},
+            "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
             "conditions": [
-              {"leftValue": "={{ $json.score }}", "operator": "larger", "rightValue": 70}
-            ]
+              {
+                "leftValue": "={{ $json.score }}",
+                "operator": {"type": "number", "operation": "gt"},
+                "rightValue": 70
+              }
+            ],
+            "combinator": "and"
           }
         }
       },

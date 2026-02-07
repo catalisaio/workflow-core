@@ -1,0 +1,25 @@
+name: Compatibility Contract
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run compatibility contract suite
+        run: go test ./tests/compat -run TestWorkflowCoreContractCases -v

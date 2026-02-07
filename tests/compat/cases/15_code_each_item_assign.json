@@ -2,7 +2,6 @@
   "id": "code_each_item_assign",
   "description": "Code runOnceForEachItem applies simple assignment",
   "category": "code",
-  "differential": false,
   "workflow": {
     "name": "Code Each Item",
     "active": false,
@@ -11,6 +10,7 @@
       {
         "name": "Code",
         "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
         "position": [300, 100],
         "parameters": {
           "mode": "runOnceForAllItems",

@@ -2,13 +2,12 @@
   "id": "code_return_items",
   "description": "Code node return items passthrough",
   "category": "code",
-  "differential": false,
   "workflow": {
     "name": "Code Return Items",
     "active": false,
     "nodes": [
       {"name": "Start", "type": "n8n-nodes-base.manualTrigger", "position": [100, 100], "parameters": {}},
-      {"name": "Code", "type": "n8n-nodes-base.code", "position": [300, 100], "parameters": {"mode": "runOnceForAllItems", "jsCode": "return items;"}}
+      {"name": "Code", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [300, 100], "parameters": {"mode": "runOnceForAllItems", "jsCode": "return items;"}}
     ],
     "connections": {
       "Start": {"main": [[{"node": "Code", "type": "main", "index": 0}]]}

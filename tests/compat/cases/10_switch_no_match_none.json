@@ -2,7 +2,6 @@
   "id": "switch_no_match_none",
   "description": "Switch with fallback none drops unmatched items",
   "category": "control-flow",
-  "differential": false,
   "workflow": {
     "name": "Switch None",
     "active": false,
@@ -41,5 +40,5 @@
     }
   },
   "input": [{"type": "Z"}],
-  "expected": [{}]
+  "expected": []
 }

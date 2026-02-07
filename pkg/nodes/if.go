@@ -175,7 +175,13 @@ func (n *IfNode) evaluateConditionsV1(ctx *types.ExecutionContext, conditions []
 func (n *IfNode) evaluateSingleCondition(ctx *types.ExecutionContext, condition map[string]interface{}) (bool, error) {
 	leftValue := condition["leftValue"]
 	rightValue := condition["rightValue"]
-	operator := getStringParam(condition, "operator", "equals")
+	operator := "equals"
+	if op, ok := condition["operator"].(string); ok {
+		operator = op
+	}
+	if opObj, ok := condition["operator"].(map[string]interface{}); ok {
+		operator = getStringParam(opObj, "operation", operator)
+	}
 
 	// Evaluate expressions
 	left, err := ctx.Evaluator().Evaluate(leftValue)

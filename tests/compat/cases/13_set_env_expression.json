@@ -2,7 +2,6 @@
   "id": "set_env_expression",
   "description": "Set can read env via explicit expression",
   "category": "expression",
-  "differential": false,
   "workflow": {
     "name": "Set Env",
     "active": false,
